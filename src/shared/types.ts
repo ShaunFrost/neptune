@@ -33,5 +33,17 @@ export type ProjectType = {
   summary: string
 }
 
+export type AddProjectDataType = {
+  name: string
+  status: ProjectStatus
+  summary: string
+}
+
+export type AddTaskDataType = {
+  taskItem: string
+  status: TaskStatus
+  priority: TaskPriority
+}
+
 export type GetProjects = () => Promise<ProjectType[]>
 export type UpdateProject = (updatedProject: ProjectType) => Promise<void>

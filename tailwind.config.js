@@ -6,6 +6,14 @@ module.exports = {
       fontFamily: {
         jersey: ['"Jersey 25"'],
         anton: ['"Anton"']
+      },
+      keyframes: {
+        buttonscaleup: {
+          '100%': { transform: 'scale(1.15)' }
+        }
+      },
+      animation: {
+        buttonscaleup: 'buttonscaleup 0.4s ease-in forwards'
       }
     }
   },

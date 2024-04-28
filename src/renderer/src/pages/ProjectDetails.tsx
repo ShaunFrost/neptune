@@ -52,7 +52,7 @@ const ProjectDetails = () => {
       return <Overview />
     }
     if (name === 'Tasks') {
-      return <Tasks tasks={selectedProject!.tasks} />
+      return <Tasks />
     }
     if (name === 'Drawboard') {
       return <Drawboard />

@@ -1,4 +1,4 @@
-import { TaskPriority, TaskStatus } from './types'
+import { ProjectStatus, TaskPriority, TaskStatus } from './types'
 
 export const APP_DIRECTORY_NAME = 'Neptune'
 export const FILE_ENCODING = 'utf8'
@@ -26,4 +26,16 @@ export const DUMMY_PROJECT = {
     ],
     summary: `Dummiest of the dummy apps. No clue why I made this. Is electron better than Tauri? Let's find out soon.`
   }
+}
+
+export const INITIAL_ADD_PROJECT_DATA = {
+  name: '',
+  status: ProjectStatus.IDEATING,
+  summary: ''
+}
+
+export const INITIAL_ADD_TASK_DATA = {
+  taskItem: '',
+  status: TaskStatus.TODO,
+  priority: TaskPriority.NORMAL
 }
