@@ -47,3 +47,5 @@ export type AddTaskDataType = {
 
 export type GetProjects = () => Promise<ProjectType[]>
 export type UpdateProject = (updatedProject: ProjectType) => Promise<void>
+export type GetProjectCanvas = (id: string) => Promise<string>
+export type UpdateProjectCanvas = (id: string, canvasData: string) => Promise<void>

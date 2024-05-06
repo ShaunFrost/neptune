@@ -1,4 +1,4 @@
-import { GetProjects, UpdateProject } from '@shared/types'
+import { GetProjectCanvas, GetProjects, UpdateProject, UpdateProjectCanvas } from '@shared/types'
 
 declare global {
   interface Window {
@@ -6,6 +6,8 @@ declare global {
       locale: string
       getProjects: GetProjects
       updateProject: UpdateProject
+      getProjectCanvas: GetProjectCanvas
+      updateProjectCanvas: UpdateProjectCanvas
     }
   }
 }

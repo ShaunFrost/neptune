@@ -2,8 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getProjects, updateProject } from './store'
-import { GetProjects, UpdateProject } from '@shared/types'
+import { getProjectCanvas, getProjects, updateProject, updateProjectCanvas } from './store'
+import { GetProjectCanvas, GetProjects, UpdateProject, UpdateProjectCanvas } from '@shared/types'
 
 function createWindow(): void {
   // Create the browser window.
@@ -66,6 +66,12 @@ app.whenReady().then(() => {
 
   ipcMain.handle('FETCH_PROJECTS', (_, ...args: Parameters<GetProjects>) => getProjects(...args))
   ipcMain.handle('WRITE_DATA', (_, ...args: Parameters<UpdateProject>) => updateProject(...args))
+  ipcMain.handle('FETCH_PROJECT_CANVAS', (_, ...args: Parameters<GetProjectCanvas>) =>
+    getProjectCanvas(...args)
+  )
+  ipcMain.handle('UPDATE_PROJECT_CANVAS', (_, ...args: Parameters<UpdateProjectCanvas>) =>
+    updateProjectCanvas(...args)
+  )
 
   createWindow()
 

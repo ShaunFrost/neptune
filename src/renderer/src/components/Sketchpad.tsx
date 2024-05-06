@@ -1,0 +1,560 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { LuPencil, LuMousePointer2, LuRectangleHorizontal, LuEraser, LuSave } from 'react-icons/lu'
+import { FaSlash } from 'react-icons/fa'
+import { Layer, Line, Rect, Stage, Transformer } from 'react-konva'
+import Konva from 'konva'
+import { v4 as uuidV4 } from 'uuid'
+import { KonvaEventObject } from 'konva/lib/Node'
+import { useAppContext } from '@renderer/store/AppContext'
+
+enum TOOLS {
+  SELECT,
+  PENCIL,
+  RECTANGLE,
+  LINE,
+  ERASER
+}
+
+enum SHAPES {
+  RECTANGLE,
+  LINE,
+  FREE
+}
+
+type Rectangle = {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation?: number
+  scaleX?: number
+  scaleY?: number
+  skewX?: number
+  skewY?: number
+  offsetX?: number
+  offsetY?: number
+}
+
+type FreeDrawElement = {
+  id: string
+  points: number[]
+  x?: number
+  y?: number
+  rotation?: number
+  scaleX?: number
+  scaleY?: number
+  skewX?: number
+  skewY?: number
+  offsetX?: number
+  offsetY?: number
+}
+
+type Line = FreeDrawElement
+
+export const SketchPad = () => {
+  const { updateProjectCanvas, projectCanvasData } = useAppContext()
+  const canvasRef = useRef<Konva.Stage | null>(null)
+  const layerRef = useRef<Konva.Layer | null>(null)
+  const [tool, setTool] = useState<TOOLS>(TOOLS.SELECT)
+  const [rectangles, setRectangles] = useState<Rectangle[]>([])
+  const [freeDrawElements, setFreeDrawElements] = useState<FreeDrawElement[]>([])
+  const [lines, setLines] = useState<Line[]>([])
+  const [isDrawing, setIsDrawing] = useState<boolean>(false)
+  const [currentElementId, setCurrentElementId] = useState<string>('')
+  const transformerRef = useRef<Konva.Transformer | null>(null)
+
+  useEffect(() => {
+    const initSketchPad = () => {
+      if (!projectCanvasData) return
+
+      const rectangleData: Rectangle[] = []
+      const linesData: Line[] = []
+      const pencilData: FreeDrawElement[] = []
+      const stageData = JSON.parse(projectCanvasData)
+      const layerData = stageData.children[0]
+      const elements = layerData.children
+      elements.forEach((element, index) => {
+        if (index > 0 && index < elements.length - 1) {
+          if (element.className === 'Rect') {
+            const { x, y, width, height, ...rest } = element.attrs
+            rectangleData.push({
+              id: uuidV4(),
+              x,
+              y,
+              width,
+              height,
+              ...rest
+            })
+          } else if (element.className === 'Line') {
+            const { points, ...rest } = element.attrs
+            if (points.length === 4) {
+              linesData.push({
+                id: uuidV4(),
+                points,
+                ...rest
+              })
+            } else if (points.length > 4) {
+              pencilData.push({
+                id: uuidV4(),
+                points,
+                ...rest
+              })
+            }
+          }
+        }
+      })
+      setRectangles(rectangleData)
+      setLines(linesData)
+      setFreeDrawElements(pencilData)
+    }
+    initSketchPad()
+  }, [projectCanvasData])
+
+  const isDraggable = useMemo(() => tool === TOOLS.SELECT, [tool])
+
+  const handleMouseDown = () => {
+    if (tool === TOOLS.SELECT) return
+
+    setIsDrawing(true)
+    const stage = canvasRef.current
+    if (!stage) return
+
+    const position = stage.getRelativePointerPosition()
+    if (!position) return
+    const { x, y } = position
+    const id = uuidV4()
+    setCurrentElementId(id)
+
+    switch (tool) {
+      case TOOLS.RECTANGLE:
+        setRectangles((prev) => [
+          ...prev,
+          {
+            id,
+            x,
+            y,
+            height: 1,
+            width: 1
+          }
+        ])
+        break
+      case TOOLS.PENCIL:
+        setFreeDrawElements((prev) => [
+          ...prev,
+          {
+            id,
+            points: [x, y]
+          }
+        ])
+        break
+      case TOOLS.LINE:
+        setLines((prev) => [
+          ...prev,
+          {
+            id,
+            points: [x, y]
+          }
+        ])
+        break
+    }
+  }
+
+  const handleMouseMove = () => {
+    if (tool === TOOLS.SELECT || !isDrawing) return
+
+    const stage = canvasRef.current
+    if (!stage) return
+
+    const position = stage.getRelativePointerPosition()
+    if (!position) return
+    const { x, y } = position
+
+    switch (tool) {
+      case TOOLS.RECTANGLE:
+        setRectangles((prev) =>
+          prev.map((rectangle) => {
+            if (rectangle.id === currentElementId) {
+              return {
+                ...rectangle,
+                width: x - rectangle.x,
+                height: y - rectangle.y
+              }
+            }
+            return rectangle
+          })
+        )
+        break
+      case TOOLS.PENCIL:
+        setFreeDrawElements((prev) =>
+          prev.map((freeDrawElement) => {
+            if (freeDrawElement.id === currentElementId) {
+              return {
+                ...freeDrawElement,
+                points: [...freeDrawElement.points, x, y]
+              }
+            }
+            return freeDrawElement
+          })
+        )
+        break
+      case TOOLS.LINE:
+        setLines((prev) =>
+          prev.map((line) => {
+            if (line.id === currentElementId) {
+              return {
+                ...line,
+                points: [line.points[0], line.points[1], x, y]
+              }
+            }
+            return line
+          })
+        )
+        break
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDrawing(false)
+  }
+
+  const handleDragStart = (id: string) => {
+    setCurrentElementId(id)
+  }
+
+  const handleDragEnd = (e: KonvaEventObject<DragEvent>, shape: SHAPES) => {
+    // console.log('DragEnd', e.target.attrs)
+
+    switch (shape) {
+      case SHAPES.RECTANGLE:
+        setRectangles((prev) =>
+          prev.map((rectangle) => {
+            if (rectangle.id === currentElementId) {
+              const { x, y, ...rest } = e.target.attrs
+              return {
+                ...rectangle,
+                x,
+                y,
+                ...rest
+              }
+            }
+            return rectangle
+          })
+        )
+        break
+      case SHAPES.FREE:
+        setFreeDrawElements((prev) =>
+          prev.map((freeDrawElement) => {
+            if (freeDrawElement.id === currentElementId) {
+              const { points, ...rest } = e.target.attrs
+              return {
+                ...freeDrawElement,
+                points,
+                ...rest
+              }
+            }
+            return freeDrawElement
+          })
+        )
+        break
+      case SHAPES.LINE:
+        setLines((prev) =>
+          prev.map((line) => {
+            if (line.id === currentElementId) {
+              const { points, ...rest } = e.target.attrs
+              return {
+                ...line,
+                points,
+                ...rest
+              }
+            }
+            return line
+          })
+        )
+        break
+    }
+  }
+
+  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (tool === TOOLS.ERASER) {
+      // console.log("Clicked Erase", e)
+      let type = e.target.className
+      if (type === 'Line' && e.target.attrs.points.length > 4) {
+        type = 'Free'
+      }
+      if (type === 'Rect') {
+        setRectangles(rectangles.filter((rectangle) => rectangle.id !== e.target.attrs.id))
+      } else if (type === 'Line') {
+        setLines(lines.filter((line) => line.id !== e.target.attrs.id))
+      } else if (type === 'Free') {
+        setFreeDrawElements(
+          freeDrawElements.filter((freeDrawElement) => freeDrawElement.id !== e.target.attrs.id)
+        )
+      }
+      const container = e.target.getStage()?.container()
+      if (!container) return
+      container.style.cursor = 'default'
+    } else if (tool === TOOLS.SELECT) {
+      const target = e.currentTarget
+      transformerRef.current?.nodes([target])
+    }
+  }
+
+  const handleTransformStart = (id: string) => {
+    setCurrentElementId(id)
+  }
+
+  const handleTransformEnd = (e: KonvaEventObject<Event>, shape: SHAPES) => {
+    // console.log('TransformEnd', e.target.attrs)
+    // console.log(canvasRef.current?.toJSON())
+
+    switch (shape) {
+      case SHAPES.RECTANGLE:
+        setRectangles((prev) =>
+          prev.map((rectangle) => {
+            if (rectangle.id === currentElementId) {
+              const { x, y, ...rest } = e.target.attrs
+              return {
+                ...rectangle,
+                x,
+                y,
+                ...rest
+              }
+            }
+            return rectangle
+          })
+        )
+        break
+      case SHAPES.FREE:
+        setFreeDrawElements((prev) =>
+          prev.map((freeDrawElement) => {
+            if (freeDrawElement.id === currentElementId) {
+              const { points, ...rest } = e.target.attrs
+              return {
+                ...freeDrawElement,
+                points,
+                ...rest
+              }
+            }
+            return freeDrawElement
+          })
+        )
+        break
+      case SHAPES.LINE:
+        setLines((prev) =>
+          prev.map((line) => {
+            if (line.id === currentElementId) {
+              const { points, ...rest } = e.target.attrs
+              return {
+                ...line,
+                points,
+                ...rest
+              }
+            }
+            return line
+          })
+        )
+    }
+  }
+
+  const handleLayerMouseOver = (e: KonvaEventObject<MouseEvent>) => {
+    if (tool !== TOOLS.ERASER) return
+    // console.log('Mouse over', e)
+    if (
+      e.target.attrs.id &&
+      e.target.attrs.id !== 'bg' &&
+      ['Rect', 'Line'].includes(e.target.className)
+    ) {
+      // console.log('Target ', e.target)
+      let type = e.target.className
+      if (type === 'Line' && e.target.attrs.points.length > 4) {
+        type = 'Free'
+      }
+
+      const elementNode = e.target as Konva.Shape
+      // console.log('Node', elementNode)
+      elementNode.shadowEnabled(true)
+      elementNode.shadowBlur(10)
+      elementNode.shadowOpacity(0.5)
+
+      const container = elementNode.getStage()?.container()
+      if (!container) return
+      container.style.cursor = 'pointer'
+    }
+  }
+
+  const handleLayerMouseOut = (e: KonvaEventObject<MouseEvent>) => {
+    if (tool !== TOOLS.ERASER) return
+    // console.log('Mouse out', e)
+    if (
+      e.target.attrs.id &&
+      e.target.attrs.id !== 'bg' &&
+      ['Rect', 'Line'].includes(e.target.className)
+    ) {
+      // console.log('Target ', e.target.className)
+      let type = e.target.className
+      if (type === 'Line' && e.target.attrs.points.length > 4) {
+        type = 'Free'
+      }
+
+      const elementNode = e.target as Konva.Shape
+      // console.log('Node', elementNode)
+      elementNode.shadowEnabled(false)
+      const container = elementNode.getStage()?.container()
+      if (!container) return
+      container.style.cursor = 'default'
+    }
+  }
+
+  const saveCanvas = () => {
+    const stageJson = canvasRef.current?.toJSON()
+    if (!stageJson) return
+    updateProjectCanvas(stageJson)
+  }
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <div className="absolute h-14 w-[50%] border-[1px] p-2 flex flex-row items-center justify-around z-10 inset-0 mx-auto mt-2 rounded-md bg-slate-200">
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.SELECT ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.SELECT)}
+        >
+          <LuMousePointer2 />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.PENCIL ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.PENCIL)}
+        >
+          <LuPencil />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.RECTANGLE ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.RECTANGLE)}
+        >
+          <LuRectangleHorizontal />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.LINE ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.LINE)}
+        >
+          <FaSlash />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.ERASER ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.ERASER)}
+        >
+          <LuEraser />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700`}
+          onClick={saveCanvas}
+        >
+          <LuSave />
+        </div>
+      </div>
+      <Stage
+        ref={canvasRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        style={{ backgroundColor: 'white' }}
+      >
+        <Layer onMouseOver={handleLayerMouseOver} onMouseOut={handleLayerMouseOut} ref={layerRef}>
+          <Rect
+            x={0}
+            y={0}
+            height={window.innerHeight}
+            width={window.innerWidth}
+            fill="#ffffff"
+            id="bg"
+            onClick={() => {
+              transformerRef.current?.nodes([])
+            }}
+          />
+          {rectangles.map((rectangle) => {
+            return (
+              <Rect
+                id={rectangle.id}
+                key={rectangle.id}
+                x={rectangle.x}
+                y={rectangle.y}
+                stroke={'#000000'}
+                strokeWidth={2}
+                height={rectangle.height}
+                width={rectangle.width}
+                rotation={rectangle.rotation ?? 0}
+                scaleX={rectangle.scaleX ?? 1}
+                scaleY={rectangle.scaleY ?? 1}
+                skewX={rectangle.skewX ?? 0}
+                skewY={rectangle.skewY ?? 0}
+                offsetX={rectangle.offsetX ?? 0}
+                offsetY={rectangle.offsetY ?? 0}
+                draggable={isDraggable}
+                onDragStart={() => handleDragStart(rectangle.id)}
+                onDragEnd={(e) => handleDragEnd(e, SHAPES.RECTANGLE)}
+                onClick={(e) => handleClick(e)}
+                onTransformStart={() => handleTransformStart(rectangle.id)}
+                onTransformEnd={(e) => handleTransformEnd(e, SHAPES.RECTANGLE)}
+              />
+            )
+          })}
+          {freeDrawElements.map((freeDrawElement) => {
+            return (
+              <Line
+                id={freeDrawElement.id}
+                key={freeDrawElement.id}
+                stroke={'#000000'}
+                strokeWidth={2}
+                points={freeDrawElement.points}
+                x={freeDrawElement.x ?? 0}
+                y={freeDrawElement.y ?? 0}
+                rotation={freeDrawElement.rotation ?? 0}
+                scaleX={freeDrawElement.scaleX ?? 1}
+                scaleY={freeDrawElement.scaleY ?? 1}
+                skewX={freeDrawElement.skewX ?? 0}
+                skewY={freeDrawElement.skewY ?? 0}
+                offsetX={freeDrawElement.offsetX ?? 0}
+                offsetY={freeDrawElement.offsetY ?? 0}
+                draggable={isDraggable}
+                onDragStart={() => handleDragStart(freeDrawElement.id)}
+                onDragEnd={(e) => handleDragEnd(e, SHAPES.FREE)}
+                onClick={(e) => handleClick(e)}
+                onTransformStart={() => handleTransformStart(freeDrawElement.id)}
+                onTransformEnd={(e) => handleTransformEnd(e, SHAPES.FREE)}
+              />
+            )
+          })}
+          {lines.map((line) => {
+            return (
+              <Line
+                id={line.id}
+                key={line.id}
+                stroke={'#000000'}
+                strokeWidth={2}
+                points={line.points}
+                x={line.x ?? 0}
+                y={line.y ?? 0}
+                rotation={line.rotation ?? 0}
+                scaleX={line.scaleX ?? 1}
+                scaleY={line.scaleY ?? 1}
+                skewX={line.skewX ?? 0}
+                skewY={line.skewY ?? 0}
+                offsetX={line.offsetX ?? 0}
+                offsetY={line.offsetY ?? 0}
+                draggable={isDraggable}
+                onDragStart={() => handleDragStart(line.id)}
+                onDragEnd={(e) => handleDragEnd(e, SHAPES.LINE)}
+                onClick={(e) => handleClick(e)}
+                onTransformStart={() => handleTransformStart(line.id)}
+                onTransformEnd={(e) => handleTransformEnd(e, SHAPES.LINE)}
+              />
+            )
+          })}
+          <Transformer ref={transformerRef} />
+        </Layer>
+      </Stage>
+    </div>
+  )
+}

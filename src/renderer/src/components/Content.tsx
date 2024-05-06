@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { Modal } from './Dialog'
 import { AddTaskModalBody, EditProjectStatusModalBody, EditSummaryModalBody } from './DialogBody'
 import { INITIAL_ADD_TASK_DATA } from '@shared/constants'
+import { SketchPad } from './Sketchpad'
 
 type OverviewProps = ComponentProps<'div'>
 
@@ -259,8 +260,8 @@ export const Tasks = ({ className, ...props }: TasksProps) => {
 
 export const Drawboard = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
-    <div className={twMerge('p-4 text-2xl', className)} {...props}>
-      <div className="flex flex-col justify-center items-center">Drawing board</div>
+    <div className={twMerge('p-4 text-2xl h-full w-full', className)} {...props}>
+      <SketchPad />
     </div>
   )
 }

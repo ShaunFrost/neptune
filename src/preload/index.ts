@@ -1,4 +1,4 @@
-import { GetProjects, UpdateProject } from '@shared/types'
+import { GetProjects, UpdateProject, GetProjectCanvas, UpdateProjectCanvas } from '@shared/types'
 import { contextBridge, ipcRenderer } from 'electron'
 // import { electronAPI } from '@electron-toolkit/preload'
 
@@ -32,7 +32,12 @@ try {
     locale: navigator.language,
     getProjects: (...args: Parameters<GetProjects>) =>
       ipcRenderer.invoke('FETCH_PROJECTS', ...args),
-    updateProject: (...args: Parameters<UpdateProject>) => ipcRenderer.invoke('WRITE_DATA', ...args)
+    updateProject: (...args: Parameters<UpdateProject>) =>
+      ipcRenderer.invoke('WRITE_DATA', ...args),
+    getProjectCanvas: (...args: Parameters<GetProjectCanvas>) =>
+      ipcRenderer.invoke('FETCH_PROJECT_CANVAS', ...args),
+    updateProjectCanvas: (...args: Parameters<UpdateProjectCanvas>) =>
+      ipcRenderer.invoke('UPDATE_PROJECT_CANVAS', ...args)
   })
 } catch (error) {
   console.error(error)
