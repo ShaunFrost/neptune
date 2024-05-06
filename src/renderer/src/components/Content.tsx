@@ -1,6 +1,7 @@
 import { ComponentProps, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { LiaEdit } from 'react-icons/lia'
+import { ImBin } from 'react-icons/im'
 import { Task } from '@shared/types'
 import { useAppContext } from '@renderer/store/AppContext'
 import { v4 as uuidv4 } from 'uuid'
@@ -162,6 +163,21 @@ const TaskTable = () => {
     setAddTaskData(INITIAL_ADD_TASK_DATA)
   }
 
+  const handleDeleteTask = (id: string) => {
+    // console.log("Remove clicked", id, selectedProject)
+
+    if (!selectedProject) return
+    const updatedTasks = tasks.filter((task) => task.id !== id)
+
+    const updatedProject = {
+      ...selectedProject,
+      tasks: updatedTasks
+    }
+
+    updateProject(updatedProject)
+    setAddTaskData(INITIAL_ADD_TASK_DATA)
+  }
+
   return (
     <div className="mt-4 bg-black rounded-lg p-4">
       <table className="table-auto w-[100%] rounded-lg bg-[#3d3d3d] border-collapse">
@@ -170,19 +186,29 @@ const TaskTable = () => {
             <th className="p-2">Task</th>
             <th className="p-2 text-center">Status</th>
             <th className="p-2 text-center">Priority</th>
+            <th className="p-2 text-center">Remove</th>
           </tr>
         </thead>
         <tbody>
           {tasks.map((task) => {
             return (
-              <tr
-                key={task.id}
-                className="transition ease-in-out duration-500 hover:bg-[#b2b2b2] hover:cursor-pointer"
-                onClick={() => handleClick(task)}
-              >
-                <td className="pt-1 pb-1 pl-2 pr-2">{task.taskItem}</td>
+              <tr key={task.id} className="transition ease-in-out duration-500 hover:bg-[#b2b2b2]">
+                <td
+                  className="pt-1 pb-1 pl-2 pr-2 hover:cursor-pointer"
+                  onClick={() => handleClick(task)}
+                >
+                  {task.taskItem}
+                </td>
                 <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.status}</td>
                 <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.priority}</td>
+                <td className="pt-1 pb-1 pl-2 pr-2 text-center">
+                  <button
+                    className="bg-red-400 p-1 rounded-lg"
+                    onClick={() => handleDeleteTask(task.id)}
+                  >
+                    <ImBin />
+                  </button>
+                </td>
               </tr>
             )
           })}
@@ -200,9 +226,20 @@ const TaskTable = () => {
   )
 }
 
+const TaskNotFound = ({ className, children, ...props }: ComponentProps<'div'>) => {
+  return (
+    <div
+      className={twMerge('flex-1 overflow-auto mt-10 mb-2 overflow-y-scroll', className)}
+      {...props}
+    >
+      <div className="mt-4 bg-black rounded-lg p-4 text-center">No Tasks</div>
+    </div>
+  )
+}
+
 export const Tasks = ({ className, ...props }: TasksProps) => {
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const { addTaskData, setAddTaskData, selectedProject, updateProject } = useAppContext()
+  const { tasks, addTaskData, setAddTaskData, selectedProject, updateProject } = useAppContext()
   const resetTaskFields = () => {
     setAddTaskData(INITIAL_ADD_TASK_DATA)
   }
@@ -224,12 +261,12 @@ export const Tasks = ({ className, ...props }: TasksProps) => {
       ...addTaskData
     }
 
-    const { tasks, ...project } = selectedProject
-    tasks.push(newTask)
+    const { tasks: projectTasks, ...project } = selectedProject
+    projectTasks.push(newTask)
 
     const updatedProject = {
       ...project,
-      tasks
+      tasks: projectTasks
     }
     updateProject(updatedProject)
     resetTaskFields()
@@ -246,7 +283,7 @@ export const Tasks = ({ className, ...props }: TasksProps) => {
           Add Task
         </button>
       </div>
-      <TaskTable />
+      {tasks.length > 0 ? <TaskTable /> : <TaskNotFound />}
       {showAddDialog ? (
         <Modal setShow={setShowAddDialog} heading="New Task" save={addTask} reset={resetTaskFields}>
           <AddTaskModalBody />
