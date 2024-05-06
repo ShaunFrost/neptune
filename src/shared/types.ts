@@ -49,3 +49,6 @@ export type GetProjects = () => Promise<ProjectType[]>
 export type UpdateProject = (updatedProject: ProjectType) => Promise<void>
 export type GetProjectCanvas = (id: string) => Promise<string>
 export type UpdateProjectCanvas = (id: string, canvasData: string) => Promise<void>
+export type GetProjectMarkdown = (id: string) => Promise<string>
+export type UpdateProjectMarkdown = (id: string, markdownContent: string) => Promise<void>
+export type DeleteProjectFiles = (id: string) => Promise<void[]>

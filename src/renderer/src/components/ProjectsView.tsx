@@ -2,6 +2,7 @@ import { ComponentProps } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { IoSearchCircle } from 'react-icons/io5'
 import { RiCodeBoxFill } from 'react-icons/ri'
+import { ImBin } from 'react-icons/im'
 import { IconContext } from 'react-icons'
 import Pie from './Pie'
 import { ProjectType } from '@shared/types'
@@ -86,22 +87,23 @@ export const ProjectNotFound = ({ className, ...props }: ComponentProps<'div'>) 
 export const ProjectCard = ({ className, project, ...props }: ProjectCardProps) => {
   const taskPercentage =
     project.totalTasks === 0 ? 0 : Math.round((project.completedTasks / project.totalTasks) * 100)
+
   return (
     <div
       className={twMerge('min-h-[250px] min-w-[350px] rounded-lg hover:cursor-pointer', className)}
       {...props}
     >
-      <div className="p-2 flex flex-col">
+      <div className="p-2 flex flex-col relative">
         <div className="flex flex-row h-16 justify-start items-center">
           <IconContext.Provider value={{ size: '4rem' }}>
             <RiCodeBoxFill />
           </IconContext.Provider>
-          <span className="ml-1 text-2xl font-jersey">{project.name}</span>
+          <span className="ml-1 text-3xl font-jersey">{project.name}</span>
         </div>
-        <p className="mt-1 ml-1">Status: {project.status}</p>
+        <p className="mt-1 ml-1 font-anton text-xl">Status: {project.status}</p>
         <div className="mt-2 flex flex-row justify-center items-center h-[100px]">
           <Pie percentage={taskPercentage} color="blue" />
-          <span>
+          <span className="font-anton text-xl">
             {project.completedTasks}/{project.totalTasks} tasks
           </span>
         </div>

@@ -1,4 +1,12 @@
-import { GetProjects, UpdateProject, GetProjectCanvas, UpdateProjectCanvas } from '@shared/types'
+import {
+  GetProjects,
+  UpdateProject,
+  GetProjectCanvas,
+  UpdateProjectCanvas,
+  GetProjectMarkdown,
+  UpdateProjectMarkdown,
+  DeleteProjectFiles
+} from '@shared/types'
 import { contextBridge, ipcRenderer } from 'electron'
 // import { electronAPI } from '@electron-toolkit/preload'
 
@@ -37,7 +45,13 @@ try {
     getProjectCanvas: (...args: Parameters<GetProjectCanvas>) =>
       ipcRenderer.invoke('FETCH_PROJECT_CANVAS', ...args),
     updateProjectCanvas: (...args: Parameters<UpdateProjectCanvas>) =>
-      ipcRenderer.invoke('UPDATE_PROJECT_CANVAS', ...args)
+      ipcRenderer.invoke('UPDATE_PROJECT_CANVAS', ...args),
+    getProjectMarkdown: (...args: Parameters<GetProjectMarkdown>) =>
+      ipcRenderer.invoke('FETCH_PROJECT_MARKDOWN', ...args),
+    updateProjectMarkdown: (...args: Parameters<UpdateProjectMarkdown>) =>
+      ipcRenderer.invoke('UPDATE_PROJECT_MARKDOWN', ...args),
+    deleteProjectFiles: (...args: Parameters<DeleteProjectFiles>) =>
+      ipcRenderer.invoke('DELETE_PROJECT', ...args)
   })
 } catch (error) {
   console.error(error)

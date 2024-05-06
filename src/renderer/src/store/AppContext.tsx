@@ -32,12 +32,20 @@ interface AppContextType {
   setSelectedTask: React.Dispatch<React.SetStateAction<Task | null>>
   projectCanvasData: string
   updateProjectCanvas: (canvasData: string) => void
+  markdownContent: string
+  updateProjectMarkdown: (markdownContent: string) => Promise<void>
+  deleteProject: (id: string) => Promise<void>
+  addNewProject: (project: ProjectType) => void
 }
 
 const loadProjects = async () => {
   const projects = await window.context.getProjects()
   // sort if required
   return projects
+}
+
+const deleteProjectFiles = async (id: string) => {
+  await window.context.deleteProjectFiles(id)
 }
 
 const updateProjectFiles = async (project: ProjectType) => {
@@ -53,6 +61,15 @@ const updateProjectCanvasFile = async (id: string, canvasData: string) => {
   await window.context.updateProjectCanvas(id, canvasData)
 }
 
+const loadProjectMarkdownData = async (id: string) => {
+  const projectMarkdown = await window.context.getProjectMarkdown(id)
+  return projectMarkdown === '' ? '# Jot down' : projectMarkdown
+}
+
+const updateProjectMarkdownFile = async (id: string, markdownContent: string) => {
+  await window.context.updateProjectMarkdown(id, markdownContent)
+}
+
 const AppContext = createContext<AppContextType>({} as AppContextType)
 
 export const AppContextProvider = ({ children }: AppContextProviderProps) => {
@@ -66,6 +83,7 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const [editProjectStatus, setEditProjectStatus] = useState<ProjectStatus>(ProjectStatus.IDEATING)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [projectCanvasData, setProjectCanvasData] = useState<string>('')
+  const [markdownContent, setMarkdownContent] = useState<string>('')
 
   const getProject = (projectId: string): ProjectType => {
     if (!projects) return {} as ProjectType
@@ -78,9 +96,24 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     setSelectedProject(project)
   }
 
+  const addNewProject = (project: ProjectType) => {
+    updateProjectFiles(project)
+    setProjects((prev) => [...prev, project])
+  }
+
   const updateProjectCanvas = (canvasData: string) => {
     updateProjectCanvasFile(selectedProjectId, canvasData)
     setProjectCanvasData(canvasData)
+  }
+
+  const updateProjectMarkdown = async (markdownContent: string) => {
+    await updateProjectMarkdownFile(selectedProjectId, markdownContent)
+    setMarkdownContent(markdownContent)
+  }
+
+  const deleteProject = async (id: string) => {
+    await deleteProjectFiles(id)
+    setProjects(projects.filter((project) => project.id !== id))
   }
 
   useEffect(() => {
@@ -91,6 +124,7 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   useEffect(() => {
     setSelectedProject(getProject(selectedProjectId))
     loadProjectCanvasData(selectedProjectId).then((data) => setProjectCanvasData(data))
+    loadProjectMarkdownData(selectedProjectId).then((data) => setMarkdownContent(data))
   }, [selectedProjectId])
 
   useEffect(() => {
@@ -100,6 +134,10 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
       setTasks(selectedProject.tasks)
     }
   }, [selectedProject])
+
+  useEffect(() => {
+    console.log('Projects changed', projects)
+  }, [projects])
 
   return (
     <AppContext.Provider
@@ -122,7 +160,11 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
         selectedTask,
         setSelectedTask,
         projectCanvasData,
-        updateProjectCanvas
+        updateProjectCanvas,
+        markdownContent,
+        updateProjectMarkdown,
+        deleteProject,
+        addNewProject
       }}
     >
       {children}

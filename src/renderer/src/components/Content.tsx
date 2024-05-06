@@ -10,6 +10,7 @@ import { Modal } from './Dialog'
 import { AddTaskModalBody, EditProjectStatusModalBody, EditSummaryModalBody } from './DialogBody'
 import { INITIAL_ADD_TASK_DATA } from '@shared/constants'
 import { SketchPad } from './Sketchpad'
+import MarkdownEditor from './MarkdownEditor'
 
 type OverviewProps = ComponentProps<'div'>
 
@@ -299,6 +300,14 @@ export const Drawboard = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div className={twMerge('p-4 text-2xl h-full w-full', className)} {...props}>
       <SketchPad />
+    </div>
+  )
+}
+
+export const Notes = ({ className, ...props }: ComponentProps<'div'>) => {
+  return (
+    <div className={twMerge('p-4 h-full w-full', className)} {...props}>
+      <MarkdownEditor />
     </div>
   )
 }

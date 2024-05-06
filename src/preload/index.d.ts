@@ -1,4 +1,12 @@
-import { GetProjectCanvas, GetProjects, UpdateProject, UpdateProjectCanvas } from '@shared/types'
+import {
+  DeleteProjectFiles,
+  GetProjectCanvas,
+  GetProjectMarkdown,
+  GetProjects,
+  UpdateProject,
+  UpdateProjectCanvas,
+  UpdateProjectMarkdown
+} from '@shared/types'
 
 declare global {
   interface Window {
@@ -8,6 +16,9 @@ declare global {
       updateProject: UpdateProject
       getProjectCanvas: GetProjectCanvas
       updateProjectCanvas: UpdateProjectCanvas
+      getProjectMarkdown: GetProjectMarkdown
+      updateProjectMarkdown: UpdateProjectMarkdown
+      deleteProjectFiles: DeleteProjectFiles
     }
   }
 }

@@ -7,10 +7,11 @@ import {
   NavBarItem,
   Overview,
   Tasks,
-  Drawboard
+  Drawboard,
+  Notes
 } from '../components'
 import { useEffect, useState } from 'react'
-import { LuHome, LuLightbulb, LuList, LuClipboardSignature } from 'react-icons/lu'
+import { LuHome, LuLightbulb, LuList, LuClipboardSignature, LuStickyNote } from 'react-icons/lu'
 import { useAppContext } from '@renderer/store/AppContext'
 
 const NavBarItemList = [
@@ -25,6 +26,10 @@ const NavBarItemList = [
   {
     name: 'Drawboard',
     icon: <LuClipboardSignature />
+  },
+  {
+    name: 'Notes',
+    icon: <LuStickyNote />
   }
 ]
 
@@ -56,6 +61,9 @@ const ProjectDetails = () => {
     }
     if (name === 'Drawboard') {
       return <Drawboard />
+    }
+    if (name === 'Notes') {
+      return <Notes />
     }
     return <></>
   }

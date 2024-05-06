@@ -2,8 +2,24 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getProjectCanvas, getProjects, updateProject, updateProjectCanvas } from './store'
-import { GetProjectCanvas, GetProjects, UpdateProject, UpdateProjectCanvas } from '@shared/types'
+import {
+  deleteProjectFiles,
+  getProjectCanvas,
+  getProjectMarkdown,
+  getProjects,
+  updateProject,
+  updateProjectCanvas,
+  updateProjectMarkdown
+} from './store'
+import {
+  DeleteProjectFiles,
+  GetProjectCanvas,
+  GetProjectMarkdown,
+  GetProjects,
+  UpdateProject,
+  UpdateProjectCanvas,
+  UpdateProjectMarkdown
+} from '@shared/types'
 
 function createWindow(): void {
   // Create the browser window.
@@ -71,6 +87,15 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('UPDATE_PROJECT_CANVAS', (_, ...args: Parameters<UpdateProjectCanvas>) =>
     updateProjectCanvas(...args)
+  )
+  ipcMain.handle('FETCH_PROJECT_MARKDOWN', (_, ...args: Parameters<GetProjectMarkdown>) =>
+    getProjectMarkdown(...args)
+  )
+  ipcMain.handle('UPDATE_PROJECT_MARKDOWN', (_, ...args: Parameters<UpdateProjectMarkdown>) =>
+    updateProjectMarkdown(...args)
+  )
+  ipcMain.handle('DELETE_PROJECT', (_, ...args: Parameters<DeleteProjectFiles>) =>
+    deleteProjectFiles(...args)
   )
 
   createWindow()

@@ -14,9 +14,11 @@ import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
 import { Modal } from '@renderer/components/Dialog'
 import { INITIAL_ADD_PROJECT_DATA } from '@shared/constants'
+import { ImBin } from 'react-icons/im'
 
 const Home = () => {
-  const { projects, addProjectData, updateProject, setAddProjectData } = useAppContext()
+  const { projects, addProjectData, addNewProject, setAddProjectData, deleteProject } =
+    useAppContext()
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -39,8 +41,12 @@ const Home = () => {
       totalTasks: 0,
       tasks: []
     }
-    updateProject(newProject)
+    addNewProject(newProject)
     resetAddProjectFields()
+  }
+
+  const handleDeleteProject = (id: string) => {
+    deleteProject(id)
   }
 
   const filteredProjects = useMemo(() => {
@@ -61,10 +67,16 @@ const Home = () => {
         <ProjectsGrid>
           {filteredProjects.map((project) => {
             return (
-              <div key={project.id}>
+              <div key={project.id} className="relative">
                 <Link to={`/projects/${project.id}`}>
                   <ProjectCard project={project} className="bg-[#1a1a1a] shadow-md shadow-black" />
                 </Link>
+                <div
+                  className="absolute top-[5%] right-[2%] flex justify-center items-center hover:cursor-pointer"
+                  onClick={() => handleDeleteProject(project.id)}
+                >
+                  <ImBin />
+                </div>
               </div>
             )
           })}

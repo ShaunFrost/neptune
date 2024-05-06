@@ -39,3 +39,5 @@ export const INITIAL_ADD_TASK_DATA = {
   status: TaskStatus.TODO,
   priority: TaskPriority.NORMAL
 }
+
+export const AUTOSAVE_THROTTLE_TIME = 3000
