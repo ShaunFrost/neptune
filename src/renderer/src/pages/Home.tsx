@@ -15,12 +15,15 @@ import { v4 as uuidv4 } from 'uuid'
 import { Modal } from '@renderer/components/Dialog'
 import { INITIAL_ADD_PROJECT_DATA } from '@shared/constants'
 import { ImBin } from 'react-icons/im'
+import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
 
 const Home = () => {
   const { projects, addProjectData, addNewProject, setAddProjectData, deleteProject } =
     useAppContext()
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showDeleteConfirmationDialog, setShowDeleteConfirmationDialog] = useState(false)
+  const [deleteId, setDeleteId] = useState('')
 
   const resetAddProjectFields = () => {
     setAddProjectData(INITIAL_ADD_PROJECT_DATA)
@@ -46,7 +49,8 @@ const Home = () => {
   }
 
   const handleDeleteProject = (id: string) => {
-    deleteProject(id)
+    setDeleteId(id)
+    setShowDeleteConfirmationDialog(true)
   }
 
   const filteredProjects = useMemo(() => {
@@ -94,6 +98,14 @@ const Home = () => {
         >
           <AddProjectModalBody />
         </Modal>
+      ) : (
+        <></>
+      )}
+      {showDeleteConfirmationDialog ? (
+        <ConfirmDialog
+          setShow={setShowDeleteConfirmationDialog}
+          confirm={() => deleteProject(deleteId)}
+        />
       ) : (
         <></>
       )}
