@@ -94,6 +94,14 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const updateProject = (project: ProjectType) => {
     updateProjectFiles(project)
     setSelectedProject(project)
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id === project.id) {
+          return project
+        }
+        return p
+      })
+    )
   }
 
   const addNewProject = (project: ProjectType) => {

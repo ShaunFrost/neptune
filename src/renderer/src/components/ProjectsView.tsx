@@ -5,7 +5,7 @@ import { RiCodeBoxFill } from 'react-icons/ri'
 import { ImBin } from 'react-icons/im'
 import { IconContext } from 'react-icons'
 import Pie from './Pie'
-import { ProjectType } from '@shared/types'
+import { ProjectType, TaskStatus } from '@shared/types'
 
 type ProjectCardProps = {
   project: ProjectType
@@ -85,8 +85,14 @@ export const ProjectNotFound = ({ className, ...props }: ComponentProps<'div'>) 
 }
 
 export const ProjectCard = ({ className, project, ...props }: ProjectCardProps) => {
-  const taskPercentage =
-    project.totalTasks === 0 ? 0 : Math.round((project.completedTasks / project.totalTasks) * 100)
+  const totalTasks = project.tasks.length
+  const completedTasks = project.tasks.reduce((total, task) => {
+    if (task.status === TaskStatus.COMPLETED) {
+      return total + 1
+    }
+    return total
+  }, 0)
+  const taskPercentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100)
 
   return (
     <div
@@ -104,7 +110,7 @@ export const ProjectCard = ({ className, project, ...props }: ProjectCardProps) 
         <div className="mt-2 flex flex-row justify-center items-center h-[100px]">
           <Pie percentage={taskPercentage} color="blue" />
           <span className="font-anton text-xl">
-            {project.completedTasks}/{project.totalTasks} tasks
+            {completedTasks}/{totalTasks} tasks
           </span>
         </div>
       </div>
