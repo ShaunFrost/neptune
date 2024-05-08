@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { LuPencil, LuMousePointer2, LuRectangleHorizontal, LuEraser, LuSave } from 'react-icons/lu'
+import {
+  LuPencil,
+  LuMousePointer2,
+  LuRectangleHorizontal,
+  LuEraser,
+  LuSave,
+  LuZoomIn,
+  LuZoomOut
+} from 'react-icons/lu'
 import { CiText } from 'react-icons/ci'
 import { FaSlash } from 'react-icons/fa'
+import { GrPan } from 'react-icons/gr'
 import { Layer, Line, Rect, Text, Stage, Transformer } from 'react-konva'
 import Konva from 'konva'
 import { v4 as uuidV4 } from 'uuid'
 import { KonvaEventObject } from 'konva/lib/Node'
 import { useAppContext } from '@renderer/store/AppContext'
+import { Vector2d } from 'konva/lib/types'
 
 enum TOOLS {
   SELECT,
@@ -14,7 +24,10 @@ enum TOOLS {
   RECTANGLE,
   LINE,
   TEXT,
-  ERASER
+  ERASER,
+  PAN,
+  ZOOMIN,
+  ZOOMOUT
 }
 
 enum SHAPES {
@@ -73,6 +86,8 @@ export const SketchPad = () => {
   const { updateProjectCanvas, projectCanvasData } = useAppContext()
   const canvasRef = useRef<Konva.Stage | null>(null)
   const layerRef = useRef<Konva.Layer | null>(null)
+  const [stageXY, setStageXY] = useState<Vector2d>({ x: 0, y: 0 })
+  const [stageScale, setStageScale] = useState<Vector2d>({ x: 1, y: 1 })
   const [tool, setTool] = useState<TOOLS>(TOOLS.SELECT)
   const [rectangles, setRectangles] = useState<Rectangle[]>([])
   const [freeDrawElements, setFreeDrawElements] = useState<FreeDrawElement[]>([])
@@ -86,7 +101,7 @@ export const SketchPad = () => {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
-    console.log('Changed textx', texts)
+    console.log('Changed texts', texts)
   }, [texts])
 
   useEffect(() => {
@@ -98,10 +113,12 @@ export const SketchPad = () => {
       const pencilData: FreeDrawElement[] = []
       const textData: Text[] = []
       const stageData = JSON.parse(projectCanvasData)
+      setStageXY({ x: stageData.attrs.x, y: stageData.attrs.y })
+      setStageScale({ x: 1, y: 1 })
       const layerData = stageData.children[0]
       const elements = layerData.children
       elements.forEach((element, index) => {
-        if (index > 0 && index < elements.length - 1) {
+        if (index >= 0 && index < elements.length - 1) {
           if (element.className === 'Rect') {
             const { id, x, y, width, height, ...rest } = element.attrs
             rectangleData.push({
@@ -145,9 +162,27 @@ export const SketchPad = () => {
       setTexts(textData)
     }
     initSketchPad()
-  }, [projectCanvasData])
+  }, [])
+
+  useEffect(() => {
+    if (!transformerRef.current) return
+
+    if (tool !== TOOLS.SELECT && transformerRef.current.getNodes().length > 0) {
+      transformerRef.current.nodes([])
+    }
+  }, [tool])
 
   const isDraggable = useMemo(() => tool === TOOLS.SELECT, [tool])
+
+  const stagePan = useMemo(() => tool === TOOLS.PAN, [tool])
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    stagePan
+      ? (canvasRef.current.container().style.cursor = 'move')
+      : (canvasRef.current.container().style.cursor = 'default')
+  }, [stagePan])
 
   const handleMouseDown = () => {
     if (isTextMode) return
@@ -381,6 +416,7 @@ export const SketchPad = () => {
     } else if (tool === TOOLS.SELECT) {
       const target = e.currentTarget
       transformerRef.current?.nodes([target])
+      e.cancelBubble = true
     }
   }
 
@@ -461,11 +497,7 @@ export const SketchPad = () => {
   const handleLayerMouseOver = (e: KonvaEventObject<MouseEvent>) => {
     if (tool !== TOOLS.ERASER) return
     // console.log('Mouse over', e)
-    if (
-      e.target.attrs.id &&
-      e.target.attrs.id !== 'bg' &&
-      ['Rect', 'Line', 'Text'].includes(e.target.className)
-    ) {
+    if (e.target.attrs.id && ['Rect', 'Line', 'Text'].includes(e.target.className)) {
       // console.log('Target ', e.target)
       let type = e.target.className
       if (type === 'Line' && e.target.attrs.points.length > 4) {
@@ -487,11 +519,7 @@ export const SketchPad = () => {
   const handleLayerMouseOut = (e: KonvaEventObject<MouseEvent>) => {
     if (tool !== TOOLS.ERASER) return
     // console.log('Mouse out', e)
-    if (
-      e.target.attrs.id &&
-      e.target.attrs.id !== 'bg' &&
-      ['Rect', 'Line', 'Text'].includes(e.target.className)
-    ) {
+    if (e.target.attrs.id && ['Rect', 'Line', 'Text'].includes(e.target.className)) {
       // console.log('Target ', e.target.className)
       let type = e.target.className
       if (type === 'Line' && e.target.attrs.points.length > 4) {
@@ -546,9 +574,17 @@ export const SketchPad = () => {
     updateProjectCanvas(stageJson)
   }
 
+  const handleZoom = (scale: number) => {
+    if (!canvasRef.current) return
+
+    if (stageScale.x + scale > 0.2 && stageScale.x + scale < 1.9) {
+      setStageScale({ x: stageScale.x + scale, y: stageScale.y + scale })
+    }
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <div className="absolute h-14 w-[50%] border-[1px] p-2 flex flex-row items-center justify-around z-10 inset-0 mx-auto mt-2 rounded-md bg-slate-200">
+      <div className="absolute h-14 w-[70%] border-[1px] p-2 flex flex-row items-center justify-around z-10 inset-0 mx-auto mt-2 rounded-md bg-slate-200">
         <div
           className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.SELECT ? 'bg-gray-500 border-zinc-700' : ''}`}
           onClick={() => setTool(TOOLS.SELECT)}
@@ -591,6 +627,24 @@ export const SketchPad = () => {
         >
           <LuSave />
         </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.PAN ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.PAN)}
+        >
+          <GrPan />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700`}
+          onClick={() => handleZoom(0.1)}
+        >
+          <LuZoomIn />
+        </div>
+        <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700`}
+          onClick={() => handleZoom(-0.1)}
+        >
+          <LuZoomOut />
+        </div>
       </div>
       {isTextMode && currentElement ? (
         <textarea
@@ -599,7 +653,10 @@ export const SketchPad = () => {
           onChange={(e) => setCurrentElement({ ...currentElement, text: e.target.value })}
           ref={textAreaRef}
           className={`absolute z-10 rounded-md p-2 resize-none bg-[#f1f1f1] text-sm text-black border-[1px] border-black`}
-          style={{ top: currentElement.y, left: currentElement.x }}
+          style={{
+            top: stageXY.y + currentElement.y * stageScale.y,
+            left: stageXY.x + currentElement.x * stageScale.x
+          }}
         />
       ) : null}
 
@@ -607,23 +664,27 @@ export const SketchPad = () => {
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
+        x={stageXY.x}
+        y={stageXY.y}
+        scaleX={stageScale.x}
+        scaleY={stageScale.y}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         style={{ backgroundColor: 'white' }}
+        draggable={stagePan}
+        onDragEnd={(e) => {
+          setStageXY({ x: e.currentTarget.attrs.x, y: e.currentTarget.attrs.y })
+        }}
+        onClick={() => {
+          if (tool === TOOLS.SELECT) {
+            if (transformerRef.current) {
+              transformerRef.current?.nodes([])
+            }
+          }
+        }}
       >
         <Layer onMouseOver={handleLayerMouseOver} onMouseOut={handleLayerMouseOut} ref={layerRef}>
-          <Rect
-            x={0}
-            y={0}
-            height={window.innerHeight}
-            width={window.innerWidth}
-            fill="#ffffff"
-            id="bg"
-            onClick={() => {
-              transformerRef.current?.nodes([])
-            }}
-          />
           {rectangles.map((rectangle) => {
             return (
               <Rect
