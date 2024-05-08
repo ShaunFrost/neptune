@@ -149,7 +149,7 @@ export const SketchPad = () => {
 
   const isDraggable = useMemo(() => tool === TOOLS.SELECT, [tool])
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = () => {
     if (isTextMode) return
 
     if (tool === TOOLS.SELECT) return
@@ -218,7 +218,7 @@ export const SketchPad = () => {
     }
   }
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = () => {
     if (tool === TOOLS.SELECT || !isDrawing) return
 
     const stage = canvasRef.current
@@ -272,7 +272,7 @@ export const SketchPad = () => {
     }
   }
 
-  const handleMouseUp = (e) => {
+  const handleMouseUp = () => {
     setIsDrawing(false)
     if (isTextMode) {
       const textArea = textAreaRef.current
@@ -607,9 +607,9 @@ export const SketchPad = () => {
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
-        onMouseDown={(e) => handleMouseDown(e)}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={(e) => handleMouseUp(e)}
+        onMouseUp={handleMouseUp}
         style={{ backgroundColor: 'white' }}
       >
         <Layer onMouseOver={handleLayerMouseOver} onMouseOut={handleLayerMouseOut} ref={layerRef}>
