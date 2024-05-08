@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { LuPencil, LuMousePointer2, LuRectangleHorizontal, LuEraser, LuSave } from 'react-icons/lu'
+import { CiText } from 'react-icons/ci'
 import { FaSlash } from 'react-icons/fa'
-import { Layer, Line, Rect, Stage, Transformer } from 'react-konva'
+import { Layer, Line, Rect, Text, Stage, Transformer } from 'react-konva'
 import Konva from 'konva'
 import { v4 as uuidV4 } from 'uuid'
 import { KonvaEventObject } from 'konva/lib/Node'
@@ -12,13 +13,15 @@ enum TOOLS {
   PENCIL,
   RECTANGLE,
   LINE,
+  TEXT,
   ERASER
 }
 
 enum SHAPES {
   RECTANGLE,
   LINE,
-  FREE
+  FREE,
+  TEXT
 }
 
 type Rectangle = {
@@ -52,6 +55,20 @@ type FreeDrawElement = {
 
 type Line = FreeDrawElement
 
+type Text = {
+  id: string
+  text: string
+  x: number
+  y: number
+  rotation?: number
+  scaleX?: number
+  scaleY?: number
+  skewX?: number
+  skewY?: number
+  offsetX?: number
+  offsetY?: number
+}
+
 export const SketchPad = () => {
   const { updateProjectCanvas, projectCanvasData } = useAppContext()
   const canvasRef = useRef<Konva.Stage | null>(null)
@@ -60,9 +77,17 @@ export const SketchPad = () => {
   const [rectangles, setRectangles] = useState<Rectangle[]>([])
   const [freeDrawElements, setFreeDrawElements] = useState<FreeDrawElement[]>([])
   const [lines, setLines] = useState<Line[]>([])
+  const [texts, setTexts] = useState<Text[]>([])
   const [isDrawing, setIsDrawing] = useState<boolean>(false)
+  const [isTextMode, setIsTextMode] = useState<boolean>(false)
   const [currentElementId, setCurrentElementId] = useState<string>('')
+  const [currentElement, setCurrentElement] = useState<Text | null>(null)
   const transformerRef = useRef<Konva.Transformer | null>(null)
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    console.log('Changed textx', texts)
+  }, [texts])
 
   useEffect(() => {
     const initSketchPad = () => {
@@ -71,15 +96,16 @@ export const SketchPad = () => {
       const rectangleData: Rectangle[] = []
       const linesData: Line[] = []
       const pencilData: FreeDrawElement[] = []
+      const textData: Text[] = []
       const stageData = JSON.parse(projectCanvasData)
       const layerData = stageData.children[0]
       const elements = layerData.children
       elements.forEach((element, index) => {
         if (index > 0 && index < elements.length - 1) {
           if (element.className === 'Rect') {
-            const { x, y, width, height, ...rest } = element.attrs
+            const { id, x, y, width, height, ...rest } = element.attrs
             rectangleData.push({
-              id: uuidV4(),
+              id,
               x,
               y,
               width,
@@ -87,34 +113,50 @@ export const SketchPad = () => {
               ...rest
             })
           } else if (element.className === 'Line') {
-            const { points, ...rest } = element.attrs
+            const { id, points, ...rest } = element.attrs
             if (points.length === 4) {
               linesData.push({
-                id: uuidV4(),
+                id,
                 points,
                 ...rest
               })
             } else if (points.length > 4) {
               pencilData.push({
-                id: uuidV4(),
+                id,
                 points,
                 ...rest
               })
             }
+          } else if (element.className === 'Text') {
+            const { id, x, y, text, ...rest } = element.attrs
+            textData.push({
+              id,
+              x,
+              y,
+              text,
+              ...rest
+            })
           }
         }
       })
       setRectangles(rectangleData)
       setLines(linesData)
       setFreeDrawElements(pencilData)
+      setTexts(textData)
     }
     initSketchPad()
   }, [projectCanvasData])
 
   const isDraggable = useMemo(() => tool === TOOLS.SELECT, [tool])
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e) => {
+    if (isTextMode) return
+
     if (tool === TOOLS.SELECT) return
+
+    if (tool === TOOLS.TEXT) {
+      setIsTextMode(true)
+    }
 
     setIsDrawing(true)
     const stage = canvasRef.current
@@ -157,10 +199,26 @@ export const SketchPad = () => {
           }
         ])
         break
+      case TOOLS.TEXT:
+        setTexts((prev) => [
+          ...prev,
+          {
+            id,
+            x,
+            y,
+            text: 'Enter text'
+          }
+        ])
+        setCurrentElement({
+          id,
+          x,
+          y,
+          text: 'Enter text'
+        })
     }
   }
 
-  const handleMouseMove = () => {
+  const handleMouseMove = (e) => {
     if (tool === TOOLS.SELECT || !isDrawing) return
 
     const stage = canvasRef.current
@@ -214,8 +272,16 @@ export const SketchPad = () => {
     }
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e) => {
     setIsDrawing(false)
+    if (isTextMode) {
+      const textArea = textAreaRef.current
+      if (!textArea) return
+      if (isTextMode) {
+        // console.log('Entered textarea', textArea)
+        textArea.focus()
+      }
+    }
   }
 
   const handleDragStart = (id: string) => {
@@ -272,6 +338,22 @@ export const SketchPad = () => {
           })
         )
         break
+      case SHAPES.TEXT:
+        setTexts((prev) =>
+          prev.map((textEl) => {
+            if (textEl.id === currentElementId) {
+              const { x, y, ...rest } = e.target.attrs
+              return {
+                ...textEl,
+                x,
+                y,
+                ...rest
+              }
+            }
+            return textEl
+          })
+        )
+        break
     }
   }
 
@@ -290,6 +372,8 @@ export const SketchPad = () => {
         setFreeDrawElements(
           freeDrawElements.filter((freeDrawElement) => freeDrawElement.id !== e.target.attrs.id)
         )
+      } else if (type === 'Text') {
+        setTexts(texts.filter((text) => text.id !== e.target.attrs.id))
       }
       const container = e.target.getStage()?.container()
       if (!container) return
@@ -305,7 +389,7 @@ export const SketchPad = () => {
   }
 
   const handleTransformEnd = (e: KonvaEventObject<Event>, shape: SHAPES) => {
-    // console.log('TransformEnd', e.target.attrs)
+    console.log('TransformEnd', e.target.attrs)
     // console.log(canvasRef.current?.toJSON())
 
     switch (shape) {
@@ -354,6 +438,23 @@ export const SketchPad = () => {
             return line
           })
         )
+        break
+      case SHAPES.TEXT:
+        setTexts((prev) =>
+          prev.map((textEl) => {
+            if (textEl.id === currentElementId) {
+              const { x, y, ...rest } = e.target.attrs
+              return {
+                ...textEl,
+                x,
+                y,
+                ...rest
+              }
+            }
+            return textEl
+          })
+        )
+        break
     }
   }
 
@@ -363,7 +464,7 @@ export const SketchPad = () => {
     if (
       e.target.attrs.id &&
       e.target.attrs.id !== 'bg' &&
-      ['Rect', 'Line'].includes(e.target.className)
+      ['Rect', 'Line', 'Text'].includes(e.target.className)
     ) {
       // console.log('Target ', e.target)
       let type = e.target.className
@@ -389,7 +490,7 @@ export const SketchPad = () => {
     if (
       e.target.attrs.id &&
       e.target.attrs.id !== 'bg' &&
-      ['Rect', 'Line'].includes(e.target.className)
+      ['Rect', 'Line', 'Text'].includes(e.target.className)
     ) {
       // console.log('Target ', e.target.className)
       let type = e.target.className
@@ -404,6 +505,39 @@ export const SketchPad = () => {
       if (!container) return
       container.style.cursor = 'default'
     }
+  }
+
+  const handleOnBlur = () => {
+    // console.log("Commit changes");
+    if (!currentElement) return
+    const { id } = currentElement
+    setTexts(
+      texts.map((textEl) => {
+        if (textEl.id === id) {
+          return {
+            ...textEl,
+            text: currentElement.text
+          }
+        }
+        return textEl
+      })
+    )
+    setCurrentElement(null)
+    setIsTextMode(false)
+    setTool(TOOLS.SELECT)
+  }
+
+  const handleDblClick = (event: KonvaEventObject<MouseEvent>) => {
+    if (tool !== TOOLS.SELECT) return
+
+    const { className } = event.target
+    if (className !== 'Text') return
+
+    // console.log("Here", event.target)
+
+    const textElement = texts.find((text) => text.id === event.target.attrs.id)
+    setIsTextMode(true)
+    setCurrentElement(textElement ?? null)
   }
 
   const saveCanvas = () => {
@@ -440,6 +574,12 @@ export const SketchPad = () => {
           <FaSlash />
         </div>
         <div
+          className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.TEXT ? 'bg-gray-500 border-zinc-700' : ''}`}
+          onClick={() => setTool(TOOLS.TEXT)}
+        >
+          <CiText />
+        </div>
+        <div
           className={`h-8 w-8 rounded-md border-[2px] bg-black border-zinc-500 flex justify-center items-center hover:cursor-pointer hover:bg-gray-500 hover:border-zinc-700 ${tool === TOOLS.ERASER ? 'bg-gray-500 border-zinc-700' : ''}`}
           onClick={() => setTool(TOOLS.ERASER)}
         >
@@ -452,13 +592,24 @@ export const SketchPad = () => {
           <LuSave />
         </div>
       </div>
+      {isTextMode && currentElement ? (
+        <textarea
+          onBlur={handleOnBlur}
+          value={currentElement.text}
+          onChange={(e) => setCurrentElement({ ...currentElement, text: e.target.value })}
+          ref={textAreaRef}
+          className={`absolute z-10 rounded-md p-2 resize-none bg-[#f1f1f1] text-sm text-black border-[1px] border-black`}
+          style={{ top: currentElement.y, left: currentElement.x }}
+        />
+      ) : null}
+
       <Stage
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => handleMouseDown(e)}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onMouseUp={(e) => handleMouseUp(e)}
         style={{ backgroundColor: 'white' }}
       >
         <Layer onMouseOver={handleLayerMouseOver} onMouseOut={handleLayerMouseOut} ref={layerRef}>
@@ -549,6 +700,33 @@ export const SketchPad = () => {
                 onClick={(e) => handleClick(e)}
                 onTransformStart={() => handleTransformStart(line.id)}
                 onTransformEnd={(e) => handleTransformEnd(e, SHAPES.LINE)}
+              />
+            )
+          })}
+          {texts.map((text) => {
+            return (
+              <Text
+                id={text.id}
+                key={text.id}
+                text={text.text}
+                stroke={'#000000'}
+                strokeWidth={1}
+                x={text.x}
+                y={text.y}
+                rotation={text.rotation ?? 0}
+                scaleX={text.scaleX ?? 1}
+                scaleY={text.scaleY ?? 1}
+                skewX={text.skewX ?? 0}
+                skewY={text.skewY ?? 0}
+                offsetX={text.offsetX ?? 0}
+                offsetY={text.offsetY ?? 0}
+                draggable={isDraggable}
+                onDragStart={() => handleDragStart(text.id)}
+                onDragEnd={(e) => handleDragEnd(e, SHAPES.TEXT)}
+                onClick={(e) => handleClick(e)}
+                onDblClick={(e) => handleDblClick(e)}
+                onTransformStart={() => handleTransformStart(text.id)}
+                onTransformEnd={(e) => handleTransformEnd(e, SHAPES.TEXT)}
               />
             )
           })}
