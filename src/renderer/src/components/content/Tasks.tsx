@@ -5,6 +5,7 @@ import { ComponentProps } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { useTasktable } from '@renderer/hooks/useTasktable'
 import { ImBin } from 'react-icons/im'
+import TransitionComponent from '../TransitionComponent'
 
 type TasksProps = ComponentProps<'div'>
 
@@ -57,49 +58,54 @@ const TaskTable = () => {
   } = useTasktable()
 
   return (
-    <div className="mt-4 bg-black rounded-lg p-4">
-      <table className="table-auto w-[100%] rounded-lg bg-[#3d3d3d] border-collapse">
-        <thead className="text-left text-xl">
-          <tr>
-            <th className="p-2">Task</th>
-            <th className="p-2 text-center">Status</th>
-            <th className="p-2 text-center">Priority</th>
-            <th className="p-2 text-center">Remove</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task) => {
-            return (
-              <tr key={task.id} className="transition ease-in-out duration-500 hover:bg-[#b2b2b2]">
-                <td
-                  className="pt-1 pb-1 pl-2 pr-2 hover:cursor-pointer"
-                  onClick={() => handleClick(task)}
+    <TransitionComponent>
+      <div className="mt-4 bg-black rounded-lg p-4">
+        <table className="table-auto w-[100%] rounded-lg bg-[#3d3d3d] border-collapse">
+          <thead className="text-left text-xl">
+            <tr>
+              <th className="p-2">Task</th>
+              <th className="p-2 text-center">Status</th>
+              <th className="p-2 text-center">Priority</th>
+              <th className="p-2 text-center">Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => {
+              return (
+                <tr
+                  key={task.id}
+                  className="transition ease-in-out duration-500 hover:bg-[#b2b2b2]"
                 >
-                  {task.taskItem}
-                </td>
-                <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.status}</td>
-                <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.priority}</td>
-                <td className="pt-1 pb-1 pl-2 pr-2 text-center">
-                  <button
-                    className="bg-red-400 p-1 rounded-lg"
-                    onClick={() => handleDeleteTask(task.id)}
+                  <td
+                    className="pt-1 pb-1 pl-2 pr-2 hover:cursor-pointer"
+                    onClick={() => handleClick(task)}
                   >
-                    <ImBin />
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-        <tfoot className="h-[10px]" />
-      </table>
-      {showEditTask ? (
-        <Modal setShow={setShowEditTask} heading="Edit Task" save={saveTask} reset={resetTask}>
-          <AddTaskModalBody />
-        </Modal>
-      ) : (
-        <></>
-      )}
-    </div>
+                    {task.taskItem}
+                  </td>
+                  <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.status}</td>
+                  <td className="pt-1 pb-1 pl-2 pr-2 text-center">{task.priority}</td>
+                  <td className="pt-1 pb-1 pl-2 pr-2 text-center">
+                    <button
+                      className="bg-red-400 p-1 rounded-lg"
+                      onClick={() => handleDeleteTask(task.id)}
+                    >
+                      <ImBin />
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+          <tfoot className="h-[10px]" />
+        </table>
+        {showEditTask ? (
+          <Modal setShow={setShowEditTask} heading="Edit Task" save={saveTask} reset={resetTask}>
+            <AddTaskModalBody />
+          </Modal>
+        ) : (
+          <></>
+        )}
+      </div>
+    </TransitionComponent>
   )
 }

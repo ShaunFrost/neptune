@@ -16,6 +16,7 @@ import { Modal } from '@renderer/components/Dialog'
 import { INITIAL_ADD_PROJECT_DATA } from '@shared/constants'
 import { ImBin } from 'react-icons/im'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
+import TransitionComponent from '@renderer/components/TransitionComponent'
 
 const Home = () => {
   const { projects, addProjectData, addNewProject, setAddProjectData, deleteProject } =
@@ -61,55 +62,60 @@ const Home = () => {
   }, [searchQuery, projects])
 
   return (
-    <ProjectsView className="relative">
-      <SearchBar
-        setShowAddDialog={setShowAddDialog}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      />
-      {filteredProjects.length > 0 ? (
-        <ProjectsGrid>
-          {filteredProjects.map((project) => {
-            return (
-              <div key={project.id} className="relative">
-                <Link to={`/projects/${project.id}`}>
-                  <ProjectCard project={project} className="bg-[#1a1a1a] shadow-md shadow-black" />
-                </Link>
-                <div
-                  className="absolute top-[5%] right-[2%] flex justify-center items-center hover:cursor-pointer"
-                  onClick={() => handleDeleteProject(project.id)}
-                >
-                  <ImBin />
-                </div>
-              </div>
-            )
-          })}
-        </ProjectsGrid>
-      ) : (
-        <ProjectNotFound />
-      )}
-
-      {showAddDialog ? (
-        <Modal
-          setShow={setShowAddDialog}
-          heading="New Project"
-          save={handleAddNewProject}
-          reset={resetAddProjectFields}
-        >
-          <AddProjectModalBody />
-        </Modal>
-      ) : (
-        <></>
-      )}
-      {showDeleteConfirmationDialog ? (
-        <ConfirmDialog
-          setShow={setShowDeleteConfirmationDialog}
-          confirm={() => deleteProject(deleteId)}
+    <TransitionComponent>
+      <ProjectsView className="relative">
+        <SearchBar
+          setShowAddDialog={setShowAddDialog}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
-      ) : (
-        <></>
-      )}
-    </ProjectsView>
+        {filteredProjects.length > 0 ? (
+          <ProjectsGrid>
+            {filteredProjects.map((project) => {
+              return (
+                <div key={project.id} className="relative">
+                  <Link to={`/projects/${project.id}`}>
+                    <ProjectCard
+                      project={project}
+                      className="bg-[#1a1a1a] shadow-md shadow-black"
+                    />
+                  </Link>
+                  <div
+                    className="absolute top-[5%] right-[2%] flex justify-center items-center hover:cursor-pointer"
+                    onClick={() => handleDeleteProject(project.id)}
+                  >
+                    <ImBin />
+                  </div>
+                </div>
+              )
+            })}
+          </ProjectsGrid>
+        ) : (
+          <ProjectNotFound />
+        )}
+
+        {showAddDialog ? (
+          <Modal
+            setShow={setShowAddDialog}
+            heading="New Project"
+            save={handleAddNewProject}
+            reset={resetAddProjectFields}
+          >
+            <AddProjectModalBody />
+          </Modal>
+        ) : (
+          <></>
+        )}
+        {showDeleteConfirmationDialog ? (
+          <ConfirmDialog
+            setShow={setShowDeleteConfirmationDialog}
+            confirm={() => deleteProject(deleteId)}
+          />
+        ) : (
+          <></>
+        )}
+      </ProjectsView>
+    </TransitionComponent>
   )
 }
 

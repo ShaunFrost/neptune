@@ -52,3 +52,8 @@ export type UpdateProjectCanvas = (id: string, canvasData: string) => Promise<vo
 export type GetProjectMarkdown = (id: string) => Promise<string>
 export type UpdateProjectMarkdown = (id: string, markdownContent: string) => Promise<void>
 export type DeleteProjectFiles = (id: string) => Promise<void[]>
+
+export enum ANIMATIONS {
+  SLIDE_FROM_RIGHT = 'slideFromRight',
+  SCALE_FROM_MIDDLE = 'scaleFromMiddle'
+}

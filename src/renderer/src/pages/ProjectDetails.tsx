@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from 'react'
 import { LuHome, LuLightbulb, LuList, LuClipboardSignature, LuStickyNote } from 'react-icons/lu'
 import { useAppContext } from '@renderer/store/AppContext'
+import TransitionComponent from '@renderer/components/TransitionComponent'
 
 const NavBarItemList = [
   {
@@ -77,33 +78,35 @@ const ProjectDetails = () => {
   }, [activeTab])
 
   return (
-    <ProjectLayout>
-      <Sidebar className="bg-[#1a1a1a] rounded-lg ml-2">
-        <SideNavBar>
-          <Link to="/">
-            <NavBarItem>
-              <div>
-                <LuHome />
-              </div>
-              <div className="ml-2">Home </div>
-            </NavBarItem>
-          </Link>
-          {NavBarItemList.map((navBarItem) => {
-            return (
-              <NavBarItem
-                key={navBarItem.name}
-                active={activeTab === navBarItem.name}
-                onClick={() => handleNavItemClick(navBarItem.name)}
-              >
-                <div>{navBarItem.icon}</div>
-                <div className="ml-2">{navBarItem.name}</div>
+    <TransitionComponent>
+      <ProjectLayout>
+        <Sidebar className="bg-[#1a1a1a] rounded-lg ml-2">
+          <SideNavBar>
+            <Link to="/">
+              <NavBarItem>
+                <div>
+                  <LuHome />
+                </div>
+                <div className="ml-2">Home </div>
               </NavBarItem>
-            )
-          })}
-        </SideNavBar>
-      </Sidebar>
-      <Content className="bg-[#1a1a1a] rounded-lg ml-2 mr-2 relative">{content}</Content>
-    </ProjectLayout>
+            </Link>
+            {NavBarItemList.map((navBarItem) => {
+              return (
+                <NavBarItem
+                  key={navBarItem.name}
+                  active={activeTab === navBarItem.name}
+                  onClick={() => handleNavItemClick(navBarItem.name)}
+                >
+                  <div>{navBarItem.icon}</div>
+                  <div className="ml-2">{navBarItem.name}</div>
+                </NavBarItem>
+              )
+            })}
+          </SideNavBar>
+        </Sidebar>
+        <Content className="bg-[#1a1a1a] rounded-lg ml-2 mr-2 relative">{content}</Content>
+      </ProjectLayout>
+    </TransitionComponent>
   )
 }
 
