@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "An offline application to manage side projects that help with building your developer portfolio",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Rasesh K Rout",
+  "homepage": "https://github.com/ShaunFrost/neptune",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

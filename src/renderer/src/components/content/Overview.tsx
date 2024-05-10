@@ -24,10 +24,12 @@ export const Overview = ({ className, ...props }: OverviewProps) => {
   return (
     <TransitionComponent>
       <div className={twMerge('p-4', className)} {...props}>
-        <div className="font-anton text-5xl">Overview</div>
+        <div className="font-anton text-4xl">
+          {selectedProject!.name ? selectedProject!.name.toUpperCase() : ''}
+        </div>
         <div className="font-anton mt-4 p-4 h-[300px] overflow-y-scroll rounded-md bg-black flex flex-col">
           <div className="flex flex-row justify-between">
-            <span className="text-4xl">Summary</span>
+            <span className="text-3xl">Summary</span>
             <div className="text-2xl hover:cursor-pointer" onClick={() => setShowSaveDialog(true)}>
               <LiaEdit />
             </div>
@@ -36,7 +38,7 @@ export const Overview = ({ className, ...props }: OverviewProps) => {
         </div>
         <div className="font-anton mt-4 p-4 h-[150px] overflow-y-scroll rounded-md bg-black flex flex-col">
           <div className="flex flex-row justify-between">
-            <span className="text-4xl">Status</span>
+            <span className="text-3xl">Status</span>
             <div
               className="text-2xl hover:cursor-pointer"
               onClick={() => setShowEditStatusDialog(true)}

@@ -55,5 +55,6 @@ export type DeleteProjectFiles = (id: string) => Promise<void[]>
 
 export enum ANIMATIONS {
   SLIDE_FROM_RIGHT = 'slideFromRight',
-  SCALE_FROM_MIDDLE = 'scaleFromMiddle'
+  SCALE_FROM_MIDDLE = 'scaleFromMiddle',
+  APPEAR_DISSAPEAR = 'opacityOnly'
 }

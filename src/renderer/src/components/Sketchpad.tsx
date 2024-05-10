@@ -101,10 +101,6 @@ export const SketchPad = () => {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
-    console.log('Changed texts', texts)
-  }, [texts])
-
-  useEffect(() => {
     const initSketchPad = () => {
       if (!projectCanvasData) return
 

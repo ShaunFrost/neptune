@@ -43,7 +43,7 @@ const ProjectDetails = () => {
   const { setSelectedProjectId, selectedProject } = useAppContext()
   useEffect(() => {
     setSelectedProjectId(id)
-  }, [])
+  }, [id])
   const [content, setContent] = useState<JSX.Element>()
   useEffect(() => {
     if (!content) {

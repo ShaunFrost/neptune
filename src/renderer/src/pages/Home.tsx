@@ -17,6 +17,7 @@ import { INITIAL_ADD_PROJECT_DATA } from '@shared/constants'
 import { ImBin } from 'react-icons/im'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
 import TransitionComponent from '@renderer/components/TransitionComponent'
+import { AnimatePresence } from 'framer-motion'
 
 const Home = () => {
   const { projects, addProjectData, addNewProject, setAddProjectData, deleteProject } =
@@ -93,19 +94,18 @@ const Home = () => {
         ) : (
           <ProjectNotFound />
         )}
-
-        {showAddDialog ? (
-          <Modal
-            setShow={setShowAddDialog}
-            heading="New Project"
-            save={handleAddNewProject}
-            reset={resetAddProjectFields}
-          >
-            <AddProjectModalBody />
-          </Modal>
-        ) : (
-          <></>
-        )}
+        <AnimatePresence initial={false} mode={'wait'}>
+          {showAddDialog && (
+            <Modal
+              setShow={setShowAddDialog}
+              heading="New Project"
+              save={handleAddNewProject}
+              reset={resetAddProjectFields}
+            >
+              <AddProjectModalBody />
+            </Modal>
+          )}
+        </AnimatePresence>
         {showDeleteConfirmationDialog ? (
           <ConfirmDialog
             setShow={setShowDeleteConfirmationDialog}
