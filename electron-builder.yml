@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.neptune.app
 productName: Neptune
 directories:
   buildResources: build
