@@ -4,20 +4,26 @@ import Home from './pages/Home'
 import ProjectDetails from './pages/ProjectDetails'
 import { AppContextProvider } from './store/AppContext'
 import { Toaster } from 'react-hot-toast'
+import Welcome from './components/Welcome'
+import { useState } from 'react'
 
 function App(): JSX.Element {
-  const arr = ['1', '2', '3', '4', '5']
+  const [showApp, setShowApp] = useState<boolean>(false)
   return (
     <>
-      <AppContextProvider>
-        <DraggableTopBar />
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/projects/:id" element={<ProjectDetails />} />
-          </Routes>
-        </HashRouter>
-      </AppContextProvider>
+      {!showApp ? (
+        <Welcome startApp={() => setShowApp(true)} />
+      ) : (
+        <AppContextProvider>
+          <DraggableTopBar />
+          <HashRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/projects/:id" element={<ProjectDetails />} />
+            </Routes>
+          </HashRouter>
+        </AppContextProvider>
+      )}
       <Toaster />
     </>
   )

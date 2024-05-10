@@ -109,7 +109,7 @@ export const SketchPad = () => {
       const pencilData: FreeDrawElement[] = []
       const textData: Text[] = []
       const stageData = JSON.parse(projectCanvasData)
-      setStageXY({ x: stageData.attrs.x, y: stageData.attrs.y })
+      setStageXY({ x: stageData.attrs.x ?? 0, y: stageData.attrs.y ?? 0 })
       setStageScale({ x: 1, y: 1 })
       const layerData = stageData.children[0]
       const elements = layerData.children
