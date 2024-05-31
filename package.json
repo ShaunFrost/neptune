@@ -1,6 +1,6 @@
 {
   "name": "neptune",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An offline application to manage side projects that help with building your developer portfolio",
   "main": "./out/main/index.js",
   "author": "Rasesh K Rout",
